@@ -22,9 +22,11 @@ yarn-error.log
 Thumbs.db
 .DS_Store
 
-# Frontend build
-frontend/dist/
-
 # Backend specific
 backend/venv/
 backend/__pycache__/
+backend/.env
+
+# Frontend build
+frontend/dist/
+frontend/node_modules/

@@ -38,8 +38,10 @@ def init_db():
             );
         ''')
         # Simple migration for existing table (non-destructive if fails)
+        # Migrations
         try:
             cur.execute("ALTER TABLE reviews ADD COLUMN IF NOT EXISTS source TEXT;")
+            cur.execute("ALTER TABLE reviews ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;")
         except:
             conn.rollback()
         

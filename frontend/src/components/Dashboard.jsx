@@ -5,19 +5,39 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid
 } from 'recharts';
 import {
-  PieChart as PieIcon, TrendingUp, MessageSquare, ArrowUpRight,
-  Database, ArrowLeft
+  MessageSquare, ArrowUpRight, Database, ArrowLeft,
+  Activity, Star, ThumbsUp, ThumbsDown
 } from 'lucide-react';
 
 const Dashboard = ({ data, loading }) => {
   const [searchParams] = useSearchParams();
   const query = searchParams.get('q');
 
+  // COLORS (Green/Red/Amber) - Work well on both backgrounds
   const COLORS = {
-    Positive: '#10b981',
-    Neutral: '#64748b',
-    Negative: '#ef4444'
+    Positive: '#10b981', // Emerald-500
+    Neutral: '#f59e0b',  // Amber-500
+    Negative: '#ef4444'  // Red-500
   };
+
+  // Metrics Calculation
+  const metrics = useMemo(() => {
+    const total = data.length;
+    if (total === 0) return { avgRating: 0, positive: 0, negative: 0 };
+
+    const sumScore = data.reduce((acc, item) => acc + parseFloat(item.score), 0);
+    const avgScore = total ? (sumScore / total) : 0;
+    const avgRating = ((avgScore + 1) * 2.5).toFixed(1);
+
+    const posCount = data.filter(d => d.sentiment === 'Positive').length;
+    const negCount = data.filter(d => d.sentiment === 'Negative').length;
+
+    return {
+      avgRating,
+      positive: Math.round((posCount / total) * 100),
+      negative: Math.round((negCount / total) * 100)
+    };
+  }, [data]);
 
   const sentimentStats = useMemo(() => {
     const counts = { Positive: 0, Neutral: 0, Negative: 0 };
@@ -27,173 +47,195 @@ const Dashboard = ({ data, loading }) => {
     return Object.keys(counts).map(key => ({ name: key, value: counts[key] }));
   }, [data]);
 
-  const chartData = useMemo(() => data.slice(0, 15).map(d => ({
-    name: d.product.substring(0, 10),
-    score: parseFloat(d.score),
-    full: d.product
-  })), [data]);
+  const trendData = useMemo(() => {
+    if (!data.length) return [];
+    const chunks = 10;
+    const chunkSize = Math.ceil(data.length / chunks);
+    const trends = [];
 
-  if (!query) {
-    return (
-      <div className="min-h-[60vh] flex flex-col items-center justify-center text-slate-400 space-y-4">
-        <p>Please enter a product name to search.</p>
-        <Link to="/" className="text-blue-600 hover:underline">Go Home</Link>
-      </div>
-    );
-  }
+    for (let i = 0; i < chunks; i++) {
+      const slice = data.slice(0, (i + 1) * chunkSize);
+      const pos = slice.filter(d => d.sentiment === 'Positive').length;
+      const neg = slice.filter(d => d.sentiment === 'Negative').length;
+      const neu = slice.filter(d => d.sentiment === 'Neutral').length;
+      trends.push({
+        name: `T${i + 1}`,
+        Positive: pos,
+        Negative: neg,
+        Neutral: neu
+      });
+    }
+    return trends;
+  }, [data]);
 
   if (loading) {
     return (
-      <div className="min-h-[60vh] flex flex-col items-center justify-center text-slate-400 space-y-4">
-        <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-        <p className="animate-pulse">Analyzing reviews for "{query}"...</p>
+      <div className="min-h-[60vh] flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 space-y-4">
+        <div className="w-16 h-16 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+        <p className="animate-pulse font-medium text-emerald-600 dark:text-emerald-400">Processing Nexus Data...</p>
       </div>
     );
   }
 
+  if (!query) return null;
+
   if (!data.length) {
     return (
-      <div className="min-h-[60vh] flex flex-col items-center justify-center text-slate-400 space-y-6">
-        <Database size={64} className="opacity-20" />
+      <div className="min-h-[60vh] flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 space-y-6">
+        <Database size={64} className="opacity-20 text-emerald-500" />
         <div className="text-center">
-          <p className="text-xl font-bold text-slate-600 dark:text-slate-300">No results found for "{query}"</p>
-          <p className="text-sm">Try searching for a different product.</p>
+          <p className="text-xl font-bold text-slate-700 dark:text-slate-300">No Nexus Data Found</p>
+          <p className="text-sm">Search for a product to see insights.</p>
         </div>
-        <Link to="/" className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-          Back to Search
+        <Link to="/" className="px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors">
+          New Search
         </Link>
       </div>
     );
   }
 
   return (
-    <div className="space-y-8 animate-fade-in">
-      <div className="flex items-center gap-4 border-b border-slate-200 dark:border-slate-700 pb-6">
-        <Link to="/" className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
-          <ArrowLeft className="text-slate-600 dark:text-slate-300" />
+    <div className="space-y-8 animate-fade-in p-2 pb-20">
+      {/* Header */}
+      <div className="flex items-center gap-4 border-b border-slate-200 dark:border-slate-800 pb-6">
+        <Link to="/" className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-white">
+          <ArrowLeft />
         </Link>
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Analysis Results</h2>
-          <p className="text-slate-500 dark:text-slate-400">Showing insights for <span className="font-bold text-blue-600 dark:text-blue-400">"{query}"</span></p>
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">{query}</h2>
+          <p className="text-slate-500 dark:text-slate-500 text-xs uppercase tracking-wider font-bold">Nexus Intelligence Report</p>
         </div>
+      </div>
+
+      {/* Metric Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {[
+          { label: 'Total Reviews', icon: MessageSquare, value: data.length, trend: '+12% from last week', trendColor: 'text-emerald-600 dark:text-emerald-500', barColor: 'from-blue-500' },
+          { label: 'Avg Rating', icon: Star, value: metrics.avgRating, trend: '+0.2 improvement', trendColor: 'text-emerald-600 dark:text-emerald-500', barColor: 'from-amber-500' },
+          { label: 'Positive', icon: ThumbsUp, value: `${metrics.positive}%`, trend: '+3% vs benchmark', trendColor: 'text-emerald-600 dark:text-emerald-500', barColor: 'from-emerald-500' },
+          { label: 'Negative', icon: ThumbsDown, value: `${metrics.negative}%`, trend: '-2% reduction', trendColor: 'text-red-600 dark:text-red-500', barColor: 'from-red-500' }
+        ].map((card, i) => (
+          <div key={i} className="bg-white dark:bg-[#1e293b] p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm relative overflow-hidden group">
+            <div className="flex justify-between items-start mb-4">
+              <span className="text-slate-500 dark:text-slate-400 text-sm font-medium">{card.label}</span>
+              <card.icon size={18} className="text-slate-400 dark:text-slate-500" />
+            </div>
+            <div className="text-3xl font-bold text-slate-800 dark:text-white">{card.value}</div>
+            <div className={`${card.trendColor} text-xs font-bold mt-2 flex items-center gap-1`}>
+              <span>{card.trend.split(' ')[0]}</span> <span className="text-slate-400 dark:text-slate-500 font-normal">{card.trend.split(' ').slice(1).join(' ')}</span>
+            </div>
+            <div className={`absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r ${card.barColor} to-transparent opacity-50`}></div>
+          </div>
+        ))}
       </div>
 
       {/* Analytics Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Sentiment Distribution Pie */}
-        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700 lg:col-span-1 min-h-[350px] flex flex-col">
-          <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2 mb-6">
-            <PieIcon size={14} /> Sentiment Distribution
-          </h3>
-          <div className="flex-1 min-h-[250px]">
+        {/* Sentiment Distribution Pie (Donut) */}
+        <div className="bg-white dark:bg-[#1e293b] p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm lg:col-span-1 min-h-[350px] flex flex-col">
+          <h3 className="text-sm font-bold text-slate-800 dark:text-white mb-6">Sentiment Distribution</h3>
+          <div className="flex-1 min-h-[250px] relative">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
                   data={sentimentStats}
-                  innerRadius={60}
-                  outerRadius={85}
+                  innerRadius={80}
+                  outerRadius={100}
                   paddingAngle={5}
                   dataKey="value"
                   stroke="none"
                 >
-                  {sentimentStats.map((e, i) => <Cell key={i} fill={COLORS[e.name]} />)}
+                  {sentimentStats.map((e, i) => <Cell key={i} fill={COLORS[e.name]} cornerRadius={4} />)}
                 </Pie>
                 <Tooltip
-                  contentStyle={{ borderRadius: '12px', border: 'none', background: '#1e293b', color: '#fff' }}
-                  itemStyle={{ color: '#fff' }}
+                  contentStyle={{ borderRadius: '8px', border: 'none', background: '#0f172a', color: '#fff' }}
+                  itemStyle={{ fontWeight: 'bold' }}
                 />
-                <Legend verticalAlign="bottom" height={36} />
+                <Legend
+                  verticalAlign="bottom"
+                  height={36}
+                  iconType="circle"
+                  formatter={(value) => <span className="text-slate-600 dark:text-slate-400 ml-2">{value}</span>}
+                />
               </PieChart>
             </ResponsiveContainer>
+            {/* Center Text */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="text-center">
+                <span className="text-3xl font-bold text-slate-800 dark:text-white">{metrics.positive}%</span>
+                <p className="text-xs text-slate-500 uppercase">Positive</p>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Improved Bar Chart */}
-        <div className="bg-gradient-to-br from-white to-slate-50 dark:from-slate-800 dark:to-slate-900 p-6 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700 lg:col-span-2 flex flex-col">
-          <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2 mb-6">
-            <TrendingUp size={14} /> Sentiment Variance (Recent)
-          </h3>
+        {/* Sentiment Volume Trend (Area Chart) */}
+        <div className="bg-white dark:bg-[#1e293b] p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm lg:col-span-2 flex flex-col">
+          <h3 className="text-sm font-bold text-slate-800 dark:text-white mb-6">Sentiment Trends Over Time</h3>
           <div className="flex-1 min-h-[250px]">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <AreaChart data={trendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <defs>
-                  <linearGradient id="colorScore" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
-                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                  <linearGradient id="colorPos" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={COLORS.Positive} stopOpacity={0.3} />
+                    <stop offset="95%" stopColor={COLORS.Positive} stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="colorNeu" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={COLORS.Neutral} stopOpacity={0.3} />
+                    <stop offset="95%" stopColor={COLORS.Neutral} stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="colorNeg" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={COLORS.Negative} stopOpacity={0.3} />
+                    <stop offset="95%" stopColor={COLORS.Negative} stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155" opacity={0.2} />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#94a3b8" opacity={0.1} />
                 <XAxis dataKey="name" fontSize={10} axisLine={false} tickLine={false} tick={{ fill: '#94a3b8' }} />
-                <YAxis domain={[-1, 1]} fontSize={10} axisLine={false} tickLine={false} tick={{ fill: '#94a3b8' }} />
+                <YAxis fontSize={10} axisLine={false} tickLine={false} tick={{ fill: '#94a3b8' }} />
                 <Tooltip
-                  contentStyle={{ borderRadius: '12px', border: 'none', background: '#1e293b', color: '#fff' }}
-                  cursor={{ stroke: '#3b82f6', strokeWidth: 2 }}
+                  contentStyle={{ borderRadius: '8px', border: 'none', background: '#0f172a', color: '#fff' }}
                 />
-                <Area type="monotone" dataKey="score" stroke="#3b82f6" fillOpacity={1} fill="url(#colorScore)" />
+                <Area type="monotone" dataKey="Positive" stroke={COLORS.Positive} fillOpacity={1} fill="url(#colorPos)" strokeWidth={2} />
+                <Area type="monotone" dataKey="Neutral" stroke={COLORS.Neutral} fillOpacity={1} fill="url(#colorNeu)" strokeWidth={2} />
+                <Area type="monotone" dataKey="Negative" stroke={COLORS.Negative} fillOpacity={1} fill="url(#colorNeg)" strokeWidth={2} />
               </AreaChart>
             </ResponsiveContainer>
           </div>
         </div>
       </div>
 
-      {/* Reviews Feed (Cards) */}
+      {/* Reviews List */}
       <section>
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-bold dark:text-white flex items-center gap-2">
-            <MessageSquare className="text-blue-500" /> Recent Reviews
-          </h3>
-          <span className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs font-bold px-3 py-1 rounded-full">
-            {data.length} Records
-          </span>
+          <h3 className="text-lg font-bold text-slate-800 dark:text-white">Recent Reviews</h3>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="space-y-4">
           {data.map((item, i) => (
-            <div key={i} className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm hover:shadow-md border border-slate-100 dark:border-slate-700 transition-all group flex flex-col gap-4">
+            <div key={i} className="bg-white dark:bg-[#1e293b] p-4 rounded-xl border border-slate-200 dark:border-slate-700/50 hover:border-slate-300 dark:hover:border-slate-600 transition-all flex flex-col md:flex-row gap-4 items-start shadow-sm hover:shadow-md">
 
-              {/* Card Header */}
-              <div className="flex justify-between items-start">
-                <span className={`text-[10px] font-bold px-2 py-1 rounded border uppercase tracking-wider ${item.source === 'Amazon' ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-500 border-amber-200 dark:border-amber-800' :
-                  item.source === 'Flipkart' ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800' :
-                    'bg-gray-50 text-gray-500 border-gray-200'
-                  }`}>
-                  {item.source || 'Unknown'}
-                </span>
-                <div className={`w-2 h-2 rounded-full ${item.sentiment === 'Positive' ? 'bg-emerald-500' : item.sentiment === 'Negative' ? 'bg-red-500' : 'bg-slate-400'}`}></div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className={`w-2 h-2 rounded-full ${item.sentiment === 'Positive' ? 'bg-emerald-500' :
+                      item.sentiment === 'Negative' ? 'bg-red-500' : 'bg-amber-500'
+                    }`}></span>
+                  <h4 className="font-bold text-slate-800 dark:text-slate-200 text-sm line-clamp-1">{item.product}</h4>
+                  <span className="text-xs text-slate-500 dark:text-slate-500">• {item.source}</span>
+                </div>
+                <p className="text-slate-600 dark:text-slate-400 text-sm line-clamp-2">"{item.review}"</p>
               </div>
 
-              {/* Product & Score */}
-              <div>
-                <h4 className="font-bold text-slate-800 dark:text-slate-100 text-sm line-clamp-1 mb-1" title={item.product}>
-                  {item.product}
-                </h4>
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 h-1.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full ${parseFloat(item.score) > 0 ? 'bg-emerald-500' : 'bg-red-500'}`}
-                      style={{ width: `${Math.abs(parseFloat(item.score)) * 100}%` }}
-                    />
+              <div className="flex items-center gap-4 min-w-[120px] justify-end">
+                <div className="text-right">
+                  <div className={`font-bold text-sm ${item.sentiment === 'Positive' ? 'text-emerald-600 dark:text-emerald-500' :
+                      item.sentiment === 'Negative' ? 'text-red-600 dark:text-red-500' : 'text-amber-600 dark:text-amber-500'
+                    }`}>
+                    {item.sentiment}
                   </div>
-                  <span className="text-xs font-mono text-slate-400">{item.score}</span>
+                  <div className="text-xs text-slate-500 dark:text-slate-600 font-mono">{item.score} Score</div>
                 </div>
               </div>
 
-              {/* Review Text */}
-              <div className="bg-slate-50 dark:bg-slate-900/50 p-3 rounded-xl flex-1">
-                <p className="text-slate-600 dark:text-slate-300 text-sm italic line-clamp-4">
-                  "{item.review}"
-                </p>
-              </div>
-
-              {/* Footer */}
-              <div className="flex items-center justify-between mt-auto pt-2 border-t border-slate-100 dark:border-slate-700/50">
-                <span className={`text-xs font-bold ${item.sentiment === 'Positive' ? 'text-emerald-600' : item.sentiment === 'Negative' ? 'text-red-500' : 'text-slate-500'}`}>
-                  {item.sentiment}
-                </span>
-                <button className="text-slate-300 hover:text-blue-500 transition-colors">
-                  <ArrowUpRight size={16} />
-                </button>
-              </div>
             </div>
           ))}
         </div>

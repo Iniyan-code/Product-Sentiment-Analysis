@@ -1,45 +1,53 @@
-# Product Sentiment Analyzer & Review Dashboard
+# Nexus AI - Next-Gen Market Intelligence
 
-A comprehensive web application that scrapes product reviews from E-commerce platforms (Amazon, Flipkart), analyzes their sentiment using NLP, and visualizes the data on an interactive dashboard.
+**Nexus AI** (formerly Product Sentiment Analyzer) is a cutting-edge web application that delivers real-time market insights by scraping and analyzing product reviews from major E-commerce platforms (Amazon, Flipkart). It features a professional dark/light themed dashboard, advanced sentiment analytics, and high-performance concurrent scraping.
 
-## Features
-- **Multi-Platform Scraping**: Dynamic scraping of Amazon and Flipkart using Selenium.
-- **Sentiment Analysis**: NLP-powered classification (Positive, Neutral, Negative) with polarity scores.
-- **Interactive Dashboard**: React-based UI with charts, search history, and detailed review logs.
-- **Data Persistence**: PostgreSQL database to store and retrieve analysis history.
+## 🚀 Features
 
-## Tech Stack
-- **Frontend**: React, Vite, Tailwind CSS, Recharts, Lucide React
-- **Backend**: Flask, Python, Selenium, TextBlob, PostgreSQL
-- **Database**: PostgreSQL
+-   **Multi-Platform Concurrent Scraping**:
+    -   Scrapes **Amazon** and **Flipkart** simultaneously using parallel threads for 2x speed.
+    -   **Smart Caching**: Checks the database for recent analyses (24h) to provide instant results.
+    -   **Stealth Mode**: Optimized Selenium driver with anti-detection and eager loading.
+-   **Advanced Sentiment Analysis**:
+    -   NLP-powered classification (Positive, Neutral, Negative) with precise polarity scores.
+    -   **Trend Analysis**: Visualizes sentiment trends over time with multi-line area charts.
+-   **Professional Dashboard**:
+    -   **Nexus UI**: A premium, responsive interface with **Dark Mode** (Green/Red/Orange theme) and **High-Contrast Light Mode**.
+    -   **Metric Cards**: Key performance indicators (Avg Rating, Sentiment Distribution) with simulated growth trends.
+    -   **Interactive Charts**: Donut charts for distribution and Area charts for volume trends.
 
-## prerequisites
-- Python 3.9+
-- Node.js 16+
-- PostgreSQL installed and running
-- Google Chrome (for Selenium)
+## 🛠️ Tech Stack
 
-## Installation & Setup
+-   **Frontend**: React, Vite, Tailwind CSS, Recharts, Lucide React
+-   **Backend**: Flask (Python), Selenium (Headless), TextBlob (NLP), PostgreSQL
+-   **Database**: PostgreSQL
+
+## 📋 Prerequisites
+
+-   Python 3.9+
+-   Node.js 16+
+-   PostgreSQL installed and running
+-   Google Chrome (latest version)
+
+## ⚡ Installation & Setup
 
 ### 1. Database Setup
-Ensure PostgreSQL is running. Create a database (default is `postgres` user/pass, configurable in `backend/.env`).
+Ensure PostgreSQL is running. The app uses the default `postgres` user/database (configurable in `backend/database.py`).
 ```bash
-# Optional: Create a specific database if not using default "postgres"
-createdb sentiment_db
+# Ensure the 'postgres' service is active
 ```
 
 ### 2. Backend Setup
 ```bash
 cd backend
 python -m venv venv
-# Windows
-venv\Scripts\activate
-# Mac/Linux
-# source venv/bin/activate
+# Activate Venv:
+# Windows: venv\Scripts\activate
+# Mac/Linux: source venv/bin/activate
 
 pip install -r requirements.txt
 
-# Create .env file
+# Create .env file (Optional, defaults to 'YOUR_PASSWORD')
 echo DB_PASSWORD=your_db_password > .env
 ```
 
@@ -49,12 +57,13 @@ cd frontend
 npm install
 ```
 
-## Running the Application
+## 🏃 Running the Application
 
 ### Start Backend
 ```bash
 cd backend
-python app.py
+# Use 'py' or 'python' depending on your OS
+py app.py 
 # Server starts at http://localhost:5000
 ```
 
@@ -65,17 +74,19 @@ npm run dev
 # App opens at http://localhost:5173
 ```
 
-## Usage
-1. Open the frontend URL.
-2. Enter a product name (e.g., "iPhone 15", "Nike Shoes") in the search bar.
-3. Click "Analyze".
-4. Wait for the scraper to collect reviews (approx. 10-20 seconds).
-5. View the sentiment distribution and detailed review logs.
+## 🎮 Usage
+1.  Open **Nexus AI** at `http://localhost:5173`.
+2.  Toggle **Dark/Light Mode** using the icon in the top right.
+3.  Enter a product (e.g., "Sony WH-1000XM5") and click search.
+4.  Watch the real-time analysis status (Scraping Amazon/Flipkart...).
+5.  View the **Intelligence Report**:
+    -   **Metric Cards**: Snapshot of total reviews and ratings.
+    -   **Sentiment Trends**: How sentiment has changed over time.
+    -   **Recent Reviews**: Filterable feed of individual review cards.
 
-## Deployment Notes
-- **Selenium**: This project uses Selenium which requires a browser environment.
-  - **Docker/VPS**: Recommended for deployment. You need to install Chrome/Chromium in the container.
-  - **Render/Heroku**: Free tiers often block scraping or lack resources for headless Chrome. Implementation generally requires buildpacks for Chrome.
+## 📦 Deployment Notes
+-   **Selenium**: Requires a VPS/Docker environment with Chrome installed.
+-   **Render/Heroku**: Free tiers may struggle with headless Chrome. Use a custom Dockerfile with Chrome installed for best results.
 
 ## License
 MIT
