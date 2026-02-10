@@ -15,7 +15,7 @@ import re
 
 # CONFIGURATION
 CACHE_DURATION_HOURS = 24
-MAX_REVIEWS_PER_SOURCE = 10
+MAX_REVIEWS_PER_SOURCE = 25  # Increased for better analysis
 MAX_WORKERS = 2 
 
 def clean_text(text):
