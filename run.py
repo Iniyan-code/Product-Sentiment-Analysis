@@ -18,10 +18,11 @@ def check_requirements():
     """Checks if Python and Node.js are available."""
     print("🔍 Checking system requirements...")
     try:
-        subprocess.check_call(["python", "--version"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        print("✅ Python found.")
+        # Use sys.executable to check the current python version
+        subprocess.check_call([sys.executable, "--version"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        print(f"✅ Python found: {sys.executable}")
     except:
-        print("❌ Python not found! Please install Python 3.9+")
+        print("❌ Python check failed!")
         sys.exit(1)
 
     try:
