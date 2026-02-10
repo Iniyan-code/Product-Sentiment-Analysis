@@ -7,9 +7,9 @@ load_dotenv()
 # --- DATABASE CONFIGURATION ---
 # Replace 'YOUR_PASSWORD' with your actual PostgreSQL password
 DB_CONFIG = {
-    "host": "localhost",
-    "database": "postgres",
-    "user": "postgres",
+    "host": os.getenv("DB_HOST", "localhost"),
+    "database": os.getenv("DB_NAME", "postgres"),
+    "user": os.getenv("DB_USER", "postgres"),
     "password": os.getenv("DB_PASSWORD", "YOUR_PASSWORD") 
 }
 
