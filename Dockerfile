@@ -9,15 +9,16 @@ RUN npm run build
 # --- Stage 2: Setup Backend with Chrome ---
 FROM python:3.11-slim
 
-# Install system dependencies including Chrome
+# Install dependencies and Chrome in one layer
 RUN apt-get update && apt-get install -y \
     wget \
     gnupg \
-    ca-certificates \
-    && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | gpg --dearmor -o /usr/share/keyrings/googlechrome-linux-keyring.gpg \
-    && sh -c 'echo "deb [arch=amd64 signed-by=/usr/share/keyrings/googlechrome-linux-keyring.gpg] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list' \
-    && apt-get update \
-    && apt-get install -y google-chrome-stable \
+    unzip \
+    curl \
+    && wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb \
+    && apt-get install -y ./google-chrome-stable_current_amd64.deb \
+    && rm google-chrome-stable_current_amd64.deb \
+    && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app/backend
@@ -42,6 +43,5 @@ ENV DB_NAME=postgres
 ENV DB_USER=postgres
 ENV DB_PASSWORD=password
 
-# Run the application
-# Using gunicorn for production
+# Run the application using gunicorn
 CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--timeout", "120", "app:app"]
