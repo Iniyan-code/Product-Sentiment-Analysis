@@ -9,30 +9,21 @@ RUN npm run build
 # --- Stage 2: Setup Backend with Chrome ---
 FROM python:3.11-slim
 
-# Install system dependencies for Chrome and Python
+# Install system dependencies including Chrome
 RUN apt-get update && apt-get install -y \
     wget \
     gnupg \
-    unzip \
-    libnss3 \
-    libgconf-2-4 \
-    libfontconfig1 \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install Google Chrome (Stable) - Updated method
-RUN wget -q -O /tmp/google-chrome.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb \
+    ca-certificates \
+    && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | gpg --dearmor -o /usr/share/keyrings/googlechrome-linux-keyring.gpg \
+    && sh -c 'echo "deb [arch=amd64 signed-by=/usr/share/keyrings/googlechrome-linux-keyring.gpg] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list' \
     && apt-get update \
-    && apt-get install -y /tmp/google-chrome.deb \
-    && rm /tmp/google-chrome.deb \
+    && apt-get install -y google-chrome-stable \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app/backend
 
 # Copy backend requirements and install
 COPY backend/requirements.txt .
-# Remove version constraints from requirements for compatibility if needed, 
-# but Docker environment is controlled so we can use standard pip.
-# We'll install strictly from the file.
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy backend code
